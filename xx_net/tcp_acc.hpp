@@ -116,7 +116,6 @@ static void tcp_acc_close_now(int argc, char **argv)
     s_.tcp_create();
     s_.reuse_addr(1);
     s_.reuse_port(1);
-    s_.set_nonblock(1);
     s_.xbind(ip, port);
     s_.xlisten();
 
