@@ -126,3 +126,37 @@ static void tcp_acc_close_now(int argc, char **argv)
         printf("new_con\n");
     }
 }
+
+
+static void tcp_acc_one_and_send(int argc, char **argv)
+{
+    xsock s_;
+
+    s_.close();
+    s_.tcp_create();
+    s_.reuse_addr(1);
+    s_.reuse_port(1);
+    s_.xbind(ip, port);
+    s_.xlisten();
+
+    while (1)
+    {
+        xsock new_s;
+        new_s.sock_ = s_.xaccept();
+        printf("new_con\n");
+        while(1)
+        {
+            sleep_ms(1000);
+            const char *buf = "aaaaaaaaaa";
+            auto ret = new_s.sendto(buf,10);
+            if(ret < 0)
+            {
+                new_s.close();
+                printf("close\n");
+                break;
+            }
+        
+        }
+    }
+    
+}

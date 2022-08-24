@@ -22,6 +22,11 @@ int main(int argc, char** argv)
     if("tcp_acc_close_now" == type){
         tcp_acc_close_now(argc,argv);
     }
+    if("tcp_acc_one_and_send" == type){
+        tcp_acc_one_and_send(argc,argv);
+    }
+
+    
     return 0;
 }
 
