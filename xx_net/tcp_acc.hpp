@@ -107,3 +107,23 @@ static void tcp_acc(int argc, char **argv)
         ee.wait();
     }
 }
+
+static void tcp_acc_close_now(int argc, char **argv)
+{
+    xsock s_;
+
+    s_.close();
+    s_.tcp_create();
+    s_.reuse_addr(1);
+    s_.reuse_port(1);
+    s_.set_nonblock(1);
+    s_.xbind(ip, port);
+    s_.xlisten();
+
+    while(1)
+    {
+        auto new_sock = s_.xaccept();
+        close(new_sock);
+        printf("new_con\n");
+    }
+}
