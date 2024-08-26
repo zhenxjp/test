@@ -5,6 +5,81 @@
 #include "../../common/xliburing.hpp"
 #include "../../common/xsock.hpp"
 
+void uring_udp_peek_one();
+void normal_udp();
+int kimi() ;
+void test_liburing_eventfd();
+
+int main(int argc, char** argv)
+{
+    //uring_udp_peek_one();
+    //doubao();
+    //kimi();
+    test_liburing_eventfd();
+    return 0;
+}
+
+#define EVENTFD_FLAGS 0
+
+// 线程函数，用于等待eventfd事件
+void* thread_func(void* arg) {
+    int efd = *((int*)arg); // 从参数中获取eventfd
+    
+    sleep_ms(3000);
+        // 给线程发送一个初始事件
+    uint64_t val = 1;
+    if (eventfd_write(efd, val) == -1) {
+        perror("eventfd_write");
+        exit(EXIT_FAILURE);
+    }
+
+    sleep_ms(3000);
+        // 给线程发送一个初始事件
+    if (eventfd_write(efd, val) == -1) {
+        perror("eventfd_write");
+        exit(EXIT_FAILURE);
+    }
+
+
+    pthread_exit(NULL);
+}
+void test_liburing_eventfd()
+{
+    xliburing r;
+    r.init();
+
+    int efd; // eventfd
+    pthread_t tid; // 线程ID
+
+    // 创建eventfd
+    efd = eventfd(0, EVENTFD_FLAGS);
+    if (efd == -1) {
+        perror("eventfd");
+        exit(EXIT_FAILURE);
+    }
+
+    // 创建线程
+    if (pthread_create(&tid, NULL, thread_func, &efd) != 0) {
+        perror("pthread_create");
+        exit(EXIT_FAILURE);
+    }
+    r.uring_event_fd(efd,POLLIN,nullptr,true);
+    while(1)
+    {
+        io_uring_cqe  *cqe = r.peek_cqe();
+        if(nullptr == cqe)
+        {
+            sleep_ms(10);
+            continue;
+        }
+
+        cout<<"cqe get\n";
+        r.cqe_seen(cqe);
+    }
+
+
+
+}
 
 void normal_udp()
 {
@@ -26,7 +101,7 @@ void normal_udp()
     }
 }
 
-void uring_udp()
+void uring_udp_peek_one()
 {
     xliburing r;
     r.init();
@@ -54,44 +129,33 @@ void uring_udp()
 
         msg.msg_iov = &iov;
         msg.msg_iovlen = 1;
-        bool ret = r.uring_recvmsg(s.sock_, msg, nullptr);
+        bool ret = r.uring_recvmsg(s.sock_, &msg, 0);
 
         printf("uring_recv over \n");
 
-        auto cqe = r.get_cqe();
+        auto cqe = r.peek_cqe();
         while(nullptr == cqe)
         {
             sleep_ms(10);
-            cqe = r.get_cqe();
+            cqe = r.peek_cqe();
         }
         printf("uring_recvmsg cqe\n");
-        r.cqe_done(cqe);
+        r.cqe_seen(cqe);
 
         msg.msg_iov[0].iov_len = cqe->res;
 
-        r.uring_sendmsg(s.sock_,msg,nullptr);
+        r.uring_sendmsg(s.sock_,&msg,0);
 
-        cqe = r.get_cqe();
+        cqe = r.peek_cqe();
         while(nullptr == cqe)
         {
             sleep_ms(10);
-            cqe = r.get_cqe();
+            cqe = r.peek_cqe();
         }
         printf("uring_sendmsg cqe\n");
-        r.cqe_done(cqe);
+        r.cqe_seen(cqe);
     }
 }
-
-
-int kimi() ;
-int main(int argc, char** argv)
-{
-    uring_udp();
-    //doubao();
-    //kimi();
-    return 0;
-}
-
 
 int kimi() {
     int sockfd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
