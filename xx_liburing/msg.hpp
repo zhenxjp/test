@@ -5,14 +5,14 @@
 #include "../../common/xliburing.hpp"
 #include "../../common/xsock.hpp"
 
-
+// msghdr的rb
 struct msghdr_bufer:public rb_base
 {
-    
+    // 初始化
     void init_msg(int cnt,int size)
     {
         size_ = size;
-        print_change_ = true;
+        print_change_ = false;
 
         msg_ = new msghdr[cnt];
         iovec *iov = new iovec[cnt];
@@ -44,17 +44,21 @@ struct msghdr_bufer:public rb_base
 
     }
 
+    // 写入完成
     void msg_write_done(uint64_t cnt)
     {
         rb_base::writer_done(cnt);
+        // 通知读者
         eventfd_write(efd_, cnt);
     }
 
+    // 获取写buffer
     msghdr* writer_get_msg()
     {
         return get_msg(writer_get_idx());
     }
 
+    // 获取读buffer
     msghdr* reader_get_msg()
     {
         return get_msg(reader_get_idx());

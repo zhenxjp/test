@@ -30,7 +30,7 @@ while True:
         break
     
     # 睡眠 100 毫秒
-    time.sleep(0.01)
+    # time.sleep(0.1)
 
 # 关闭 socket（实际上不会执行到这里，因为是死循环）
 sock.close()
