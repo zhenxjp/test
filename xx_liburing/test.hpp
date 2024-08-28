@@ -248,6 +248,7 @@ int kimi()
         }
 
         cout << "recv " << (char *)msg.msg_iov[0].iov_base << endl;
+        cout << "cqe res " << cqe->res;
 
         msg.msg_iov[0].iov_len = cqe->res;
 

@@ -11,6 +11,8 @@ struct msghdr_bufer:public rb_base
     
     void init_msg(int cnt,int size)
     {
+        print_ = true;
+
         msg_ = new msghdr[cnt];
         iovec *iov = new iovec[cnt];
         sockaddr_in *saddr = new sockaddr_in[cnt];
