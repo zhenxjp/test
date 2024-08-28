@@ -11,7 +11,8 @@ struct msghdr_bufer:public rb_base
     
     void init_msg(int cnt,int size)
     {
-        print_ = true;
+        size_ = size;
+        print_change_ = true;
 
         msg_ = new msghdr[cnt];
         iovec *iov = new iovec[cnt];
@@ -71,5 +72,6 @@ public:
     msghdr *msg_ = nullptr;
 
     int efd_ = -1;
+    int size_ = 0;
 };
 

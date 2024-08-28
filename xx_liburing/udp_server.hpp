@@ -41,6 +41,7 @@ public:
     {
         msghdr* msg = recv_.writer_get_msg();
         CHECK_RETV(msg != nullptr,false);
+        msg->msg_iov[0].iov_len = recv_.size_;
 
         uint64_t cqe_type = e_cqe_recv_done;
         return r_.uring_recvmsg(s_.sock_, msg, 0,(void*)cqe_type,false);
@@ -55,8 +56,8 @@ public:
             return;
         
         uint64_t type = io_uring_cqe_get_data64(cqe);
-        cout<<"net uring cqe type = "<<type<<endl;
-        printf("cqe %p,res = %d\n",cqe,cqe->res);
+        // cout<<"net uring cqe type = "<<type<<endl;
+        // printf("cqe %p,res = %d\n",cqe,cqe->res);
         r_.cqe_seen(1);
 
         if(e_cqe_recv_done == type)  
