@@ -9,6 +9,7 @@ server_address = ('127.0.0.1', 8888)
 
 data = 0
 idx = 0
+ok = 0
 while True:
     # 发送递增的数据
     idx +=1
@@ -24,7 +25,9 @@ while True:
     
     # 检查发送和接收是否一致
     if received_data.decode() == send_str:
-        print("发送和接收一致")
+        ok += 1
+        print(f"ok 发送的数据是：{send_str}，接收的数据是：{received_data.decode()},idx:{idx}，发送数据长度为：{len(send_data)}")
+
     else:
         print(f"发送和接收不一致，发送的数据是：{send_str}，接收的数据是：{received_data.decode()},idx:{idx}，发送数据长度为：{len(send_data)}")
         break

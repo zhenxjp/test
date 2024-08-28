@@ -58,6 +58,12 @@ struct msghdr_bufer:public rb_base
         return get_msg(writer_get_idx());
     }
 
+        // 获取写buffer
+    msghdr* writer_get_the_msg()
+    {
+        return get_msg(writer_get_idx());
+    }
+
     // 获取读buffer
     msghdr* reader_get_msg()
     {
