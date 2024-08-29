@@ -177,13 +177,9 @@ void uring_udp_peek_one()
 
         r.uring_sendmsg(s.sock_, &msg, 0);
 
-        cqe = r.peek_cqe();
-        while (nullptr == cqe)
-        {
-            sleep_ms(10);
-            cqe = r.peek_cqe();
-        }
-        printf("uring_sendmsg cqe\n");
+        cqe = r.get_cqe();
+
+        printf("uring_sendmsg cqe res = %u\n",cqe->res);
         r.cqe_seen();
     }
 }
