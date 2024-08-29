@@ -57,6 +57,7 @@ public:
         return true;
     }
 
+    // 网络线程，处理事件
     void check_once(int timeout_ms = -1)
     {
         // 获取事件
@@ -64,11 +65,12 @@ public:
         if (nullptr == cqe)
             return;
 
-        // 获取类_data型 user
+        // 获取类型，通过设置的user data来设置
         uint64_t type = io_uring_cqe_get_data64(cqe);
         // cout<<"net uring cqe type = "<<type<<endl;
         // printf("cqe %p,res = %d\n",cqe,cqe->res);
-
+        
+        // 接收完毕
         if (e_cqe_recv_done == type)
         {
             msghdr *msg = recv_.writer_get_msg();
@@ -76,6 +78,7 @@ public:
             recv_.msg_write_done(1);
             post_recv();
         }
+        // 待发送数据准备好
         else if (e_cqe_send_ntf == type)
         {
             while (send_rb_ridx_ < send_.writer_get_idx())
@@ -104,11 +107,13 @@ public:
                 // send_.print_info("send after send");
             }
         }
+        // 发送完毕，可以移动rb
         else if (e_cqe_send_done == type)
         {
             // 发完才能删
             send_.reader_done(1);
         }
+        // 定时事件
         else if (e_cqe_timer1 == type)
         {
             if (1)
@@ -143,8 +148,10 @@ void *net_thread(void *arg)
     return nullptr;
 }
 
+// 业务线程：数据处理函数
 void do_recv(udp_server &s,xliburing &r)
 {
+    // 数据处理干净
     while (1)
     {
         msghdr *msg = s.recv_.reader_get_msg();
@@ -154,7 +161,7 @@ void do_recv(udp_server &s,xliburing &r)
         }
         iovec &iov = msg->msg_iov[0];
         // =========================================================================================
-        // 发数据
+        // 发数据rb获取数据
         msghdr *send_msg = s.send_.writer_get_msg();
         if (nullptr == send_msg)
         {
@@ -200,9 +207,11 @@ void test_aync()
 
     sleep_ms(1000);
 
-    // 通知收到数据
+    // 创建uring
     xliburing r;
     r.init();
+
+    // event fd：网络线程通知业务线程：收到数据
     r.uring_event_fd(s.recv_.efd_, POLLIN, nullptr, true);
 
     while (1)
@@ -211,6 +220,7 @@ void test_aync()
         io_uring_cqe *cqe = r.get_cqe(100);
         if (nullptr == cqe)
             continue;
+        // 处理
         do_recv(s,r);
     }
 }
