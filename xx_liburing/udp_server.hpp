@@ -73,14 +73,18 @@ public:
         // 接收完毕
         if (e_cqe_recv_done == type)
         {
+            // 写入接收rb
             msghdr *msg = recv_.writer_get_msg();
             msg->msg_iov[0].iov_len = cqe->res;
             recv_.msg_write_done(1);
+
+            // 再post一个接收事件
             post_recv();
         }
         // 待发送数据准备好
         else if (e_cqe_send_ntf == type)
         {
+            // 可能写入了多块数据，从上次写入位置一直写到widx
             while (send_rb_ridx_ < send_.writer_get_idx())
             {
                 msghdr *send_msg = send_.get_msg(send_rb_ridx_);
