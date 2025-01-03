@@ -6,9 +6,15 @@ struct io_tester
     uint64_t rb_w_cnt = 0;
     uint64_t rb_r_cnt = 0;
 
-    std::string path;
+    uint64_t io_w_cnt = 0;
+    uint64_t io_r_cnt = 0;
 
-    rb_iov *rb;
+    std::string path = "";
+
+    rb_iov *rb = nullptr;
+    rb_iov *rb2 = nullptr;
+
+    uint64_t max = 10*1000*1000;
 };
 static io_tester GT;
 
@@ -24,6 +30,7 @@ static void write_iov(iovec *iov,uint64_t val)
 
 static void rb_writer()
 {
+    int idx = 0;
     while (true)
     {
         uint64_t cnt = 0;
@@ -31,11 +38,13 @@ static void rb_writer()
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            write_iov(iov+i,i);
+            write_iov(iov+i,idx++);
 
         }
         GT.rb->writer_done(cnt);
         GT.rb_w_cnt += cnt;
+        if (GT.rb_w_cnt >= GT.max)
+            break;
     }
 }
 ///////////////////////////////////////////////////////////////////
@@ -50,19 +59,22 @@ static void read_iov(iovec *iov,uint64_t val)
     }
 }
 
-static void rb_reader()
+static void rb_reader(rb_iov *rb)
 {
+    int idx = 0;
     while (true)
     {
         uint64_t cnt = 0;
-        iovec *iov = GT.rb->reader_get_blk(cnt);
+        iovec *iov = rb->reader_get_blk(cnt);
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            read_iov(iov+i,i);
+            read_iov(iov+i,idx++);
         }
-        GT.rb->reader_done(cnt);
+        rb->reader_done(cnt);
         GT.rb_r_cnt += cnt;
+        if (GT.rb_r_cnt >= GT.max)
+            break;
     }
 }
 
@@ -78,14 +90,12 @@ static void io_writer()
         perror("open");
         exit(-1);
     }
-    uint64_t file_blk_cnt = 1000000;
-    write(fd, &file_blk_cnt, sizeof(uint64_t));
+
     while (true)
     {
         uint64_t cnt = 0;
         iovec *iov = GT.rb->reader_get_blk(cnt);
         cnt = std::min(cnt,(uint64_t)1024);
-        cnt = std::min(cnt,file_blk_cnt);
 
         ssize_t bytes_written = writev(fd, iov, cnt);
         if (bytes_written != cnt * GT.rb->blk_size_) {
@@ -96,9 +106,8 @@ static void io_writer()
 
         
         GT.rb->reader_done(cnt);
-        GT.rb_r_cnt += cnt;
-        file_blk_cnt -= cnt;
-        if(file_blk_cnt == 0)
+        GT.io_w_cnt += cnt;
+        if (GT.io_w_cnt >= GT.max)
             break;
     }
     
@@ -119,8 +128,7 @@ static void io_writer_mmap()
     uint64_t offset = 0;
 
     
-    uint64_t file_blk_cnt = 1000000;
-    size_t len = file_blk_cnt* GT.rb->blk_size_+ sizeof(uint64_t);
+    size_t len = GT.max * GT.rb->blk_size_;
 
     // 将文件映射到内存
     mmap_ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -131,15 +139,12 @@ static void io_writer_mmap()
     }
     lseek(fd,len-1,SEEK_SET);
     write(fd, "", 1);
-    *(uint64_t*)mmap_ptr = file_blk_cnt;
-    offset+= sizeof(uint64_t);
 
     while (true)
     {
         uint64_t cnt = 0;
         iovec *iov = GT.rb->reader_get_blk(cnt);
         cnt = std::min(cnt,(uint64_t)1024);
-        cnt = std::min(cnt,file_blk_cnt);
 
         for(int i = 0; i < cnt ; i++)
         {
@@ -149,8 +154,9 @@ static void io_writer_mmap()
 
         
         GT.rb->reader_done(cnt);
-        GT.rb_r_cnt += cnt;
-        file_blk_cnt -= cnt;
+        GT.io_w_cnt += cnt;
+        if (GT.io_w_cnt >= GT.max)
+            break;
     }
 
     munmap(mmap_ptr, len);
@@ -159,44 +165,131 @@ static void io_writer_mmap()
 ///////////////////////////////////////////////////////////////////
 static void io_reader()
 {
+    int fd = open(GT.path.c_str(), O_RDONLY);
+    if (fd == -1) {
+        perror("open");
+        exit(-1);
+    }
 
+
+    while (true)
+    {
+        uint64_t cnt = 0;
+        iovec *iov = GT.rb2->writer_get_blk(cnt);
+        cnt = std::min(cnt,(uint64_t)1024);
+
+        ssize_t bytes_read = readv(fd, iov, cnt);
+        auto left = bytes_read % GT.rb->blk_size_;
+        cnt = bytes_read / GT.rb->blk_size_;
+        if(0 != left)
+        {
+            printf("readv err : read %ld left,except : %ju \n", 
+                bytes_read,left);
+        }
+
+        
+        GT.rb2->writer_done(cnt);
+        GT.io_r_cnt += cnt;
+        if (GT.io_r_cnt >= GT.max)
+            break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////
-static void iov_rw()
+
+static void iov_w()
 {
     GT.rb = new rb_iov;
     GT.rb->init(1024*1024,1024,true);
+    GT.rb2 = new rb_iov;
+    GT.rb2->init(1024*1024,1024,true);
+
     GT.path = "./io_test";
 
     // 启动线程
     std::thread t1(rb_writer);
-    std::thread t2(io_writer_mmap);
-    //std::thread t3(io_reader);
-    // std::thread t4(rb_reader);
+    std::thread t2(io_writer);
 
-    uint64_t last_w = 0;
-    uint64_t last_r = 0;
-    while (true)
+
+    sleep_ms(1000);
+    io_tester last = {0};
+    while ( false
+        || (GT.rb_w_cnt < GT.max)
+        || (GT.io_w_cnt < GT.max)
+        )
     {
-        
-        auto w = GT.rb_w_cnt;
-        auto r = GT.rb_r_cnt;
-        auto w_diff = w - last_w;
-        auto r_diff = r - last_r;
+        io_tester cur = GT;
+        // 打印last和cur的变化值
+        printf("rb_w_cnt diff: %ju,rb_r_cnt diff: %ju,io_w_cnt diff: %ju,io_r_cnt diff: %ju\n", 
+            cur.rb_w_cnt - last.rb_w_cnt,
+            cur.rb_r_cnt - last.rb_r_cnt,
+            cur.io_w_cnt - last.io_w_cnt,
+            cur.io_r_cnt - last.io_r_cnt);
 
-        printf("rb_writer %ju,rb_reader %ju,unread= %ju,wdiff %ju,rdiff %ju\n", 
-            w, r,w-r,w_diff,r_diff);
+        //  打印cur信息
+        printf("rb_w_cnt: %ju,rb_r_cnt: %ju,io_w_cnt: %ju,io_r_cnt: %ju\n", 
+            cur.rb_w_cnt,
+            cur.rb_r_cnt,
+            cur.io_w_cnt,
+            cur.io_r_cnt);
 
-        last_w = w;
-        last_r = r;
+        last = cur;
+
         sleep_ms(1000);
     }
-    
 
     t1.join();
     t2.join();
-    //t3.join();
-    //t4.join();
+}
 
+
+static void iov_r()
+{
+    GT.rb = new rb_iov;
+    GT.rb->init(1024*1024,1024,true);
+    GT.rb2 = new rb_iov;
+    GT.rb2->init(1024*1024,1024,true);
+
+    GT.path = "./io_test";
+
+    // 启动线程
+    std::thread t3(io_reader);
+    std::thread t4(rb_reader,GT.rb2);
+
+    sleep_ms(1000);
+    io_tester last = {0};
+    while ( false
+        || (GT.io_r_cnt < GT.max)
+        || (GT.rb_r_cnt < GT.max)
+        )
+    {
+        io_tester cur = GT;
+        // 打印last和cur的变化值
+        printf("rb_w_cnt diff: %ju,rb_r_cnt diff: %ju,io_w_cnt diff: %ju,io_r_cnt diff: %ju\n", 
+            cur.rb_w_cnt - last.rb_w_cnt,
+            cur.rb_r_cnt - last.rb_r_cnt,
+            cur.io_w_cnt - last.io_w_cnt,
+            cur.io_r_cnt - last.io_r_cnt);
+
+        //  打印cur信息
+        printf("rb_w_cnt: %ju,rb_r_cnt: %ju,io_w_cnt: %ju,io_r_cnt: %ju\n", 
+            cur.rb_w_cnt,
+            cur.rb_r_cnt,
+            cur.io_w_cnt,
+            cur.io_r_cnt);
+
+        last = cur;
+
+        sleep_ms(1000);
+    }
+    
+    t3.join();
+    t4.join();
+
+}
+
+
+static void iov_rw()
+{
+    iov_r();
 }
