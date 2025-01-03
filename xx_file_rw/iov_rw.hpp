@@ -139,8 +139,9 @@ static void io_writer_mmap()
         uint64_t cnt = 0;
         iovec *iov = GT.rb->reader_get_blk(cnt);
         cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,file_blk_cnt);
 
-        for(int i = 0; i < cnt && file_blk_cnt > 0; i++,file_blk_cnt--)
+        for(int i = 0; i < cnt ; i++)
         {
             memcpy((char *)mmap_ptr + offset, iov[i].iov_base, iov[i].iov_len);
             offset += iov[i].iov_len;
@@ -149,7 +150,10 @@ static void io_writer_mmap()
         
         GT.rb->reader_done(cnt);
         GT.rb_r_cnt += cnt;
+        file_blk_cnt -= cnt;
     }
+
+    munmap(mmap_ptr, len);
 
 }
 ///////////////////////////////////////////////////////////////////
@@ -181,8 +185,8 @@ static void iov_rw()
         auto w_diff = w - last_w;
         auto r_diff = r - last_r;
 
-        printf("rb_writer %ju,rb_reader %ju,unread= %ju,wdiff %ju\n", 
-            w, r,w-r,w_diff);
+        printf("rb_writer %ju,rb_reader %ju,unread= %ju,wdiff %ju,rdiff %ju\n", 
+            w, r,w-r,w_diff,r_diff);
 
         last_w = w;
         last_r = r;
