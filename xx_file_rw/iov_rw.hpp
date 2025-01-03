@@ -78,18 +78,17 @@ static void io_writer()
         perror("open");
         exit(-1);
     }
+    uint64_t file_blk_cnt = 1000000;
+    write(fd, &file_blk_cnt, sizeof(uint64_t));
     while (true)
     {
         uint64_t cnt = 0;
         iovec *iov = GT.rb->reader_get_blk(cnt);
         cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,file_blk_cnt);
 
         ssize_t bytes_written = writev(fd, iov, cnt);
-        if (bytes_written == -1) {
-            printf("writev err last error=%d",errno);
-            exit(-1);
-
-        }else if (bytes_written != cnt * GT.rb->blk_size_) {
+        if (bytes_written != cnt * GT.rb->blk_size_) {
             printf("writev err : wrote %ld bytes,except : %ju \n", 
                 bytes_written,cnt * GT.rb->blk_size_);
             exit(-1);
@@ -98,25 +97,77 @@ static void io_writer()
         
         GT.rb->reader_done(cnt);
         GT.rb_r_cnt += cnt;
+        file_blk_cnt -= cnt;
+        if(file_blk_cnt == 0)
+            break;
     }
     
 }
+///////////////////////////////////////////////////////////////////
+static void io_writer_mmap()
+{
+    int fd;
+    void *mmap_ptr;
+    struct stat file_stat;
 
+    // 打开文件，如果文件不存在则创建
+    fd = open(GT.path.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        perror("open");
+        return ;
+    }
+    uint64_t offset = 0;
+
+    
+    uint64_t file_blk_cnt = 1000000;
+    size_t len = file_blk_cnt* GT.rb->blk_size_+ sizeof(uint64_t);
+
+    // 将文件映射到内存
+    mmap_ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (mmap_ptr == MAP_FAILED) {
+        perror("mmap");
+        close(fd);
+        return ;
+    }
+    lseek(fd,len-1,SEEK_SET);
+    write(fd, "", 1);
+    *(uint64_t*)mmap_ptr = file_blk_cnt;
+    offset+= sizeof(uint64_t);
+
+    while (true)
+    {
+        uint64_t cnt = 0;
+        iovec *iov = GT.rb->reader_get_blk(cnt);
+        cnt = std::min(cnt,(uint64_t)1024);
+
+        for(int i = 0; i < cnt && file_blk_cnt > 0; i++,file_blk_cnt--)
+        {
+            memcpy((char *)mmap_ptr + offset, iov[i].iov_base, iov[i].iov_len);
+            offset += iov[i].iov_len;
+        }
+
+        
+        GT.rb->reader_done(cnt);
+        GT.rb_r_cnt += cnt;
+    }
+
+}
+///////////////////////////////////////////////////////////////////
 static void io_reader()
 {
 
 }
 
-
+///////////////////////////////////////////////////////////////////
 static void iov_rw()
 {
     GT.rb = new rb_iov;
-    GT.rb->init(1024*1024,1024);
+    GT.rb->init(1024*1024,1024,true);
     GT.path = "./io_test";
 
     // 启动线程
     std::thread t1(rb_writer);
-    std::thread t2(io_writer);
+    std::thread t2(io_writer_mmap);
     //std::thread t3(io_reader);
     // std::thread t4(rb_reader);
 
