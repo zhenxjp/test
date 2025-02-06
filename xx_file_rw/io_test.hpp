@@ -76,7 +76,7 @@ static void read_iov2(iovec *iov,uint64_t val)
 
 
 
-static int io_idx_test_w()
+static int io_idx_test_w(uint32_t blkcnt)
 {
     io_meta m;
     m.blk_cnt_max_ = 256;
@@ -96,9 +96,9 @@ static int io_idx_test_w()
 
 
     rb_iov rb;
-    rb.init(1024*1024,1024);
+    rb.init(blkcnt,1024);
 
-    uint64_t cnt = 1024*1024;
+    uint64_t cnt = blkcnt;
     iovec *iov = rb.iov_;
     for(int i = 0; i < cnt; i++)
     {
@@ -133,7 +133,7 @@ static int io_idx_test_w()
 
 
 
-static int io_idx_test_r()
+static int io_idx_test_r(uint32_t blkcnt)
 {
     io_meta m;
     m.blk_cnt_max_ = 256;
@@ -151,9 +151,9 @@ static int io_idx_test_r()
     auto ret = ior.init(ctx);
     
     rb_iov rb;
-    rb.init(1024*1024,1024);
+    rb.init(blkcnt,1024);
 
-    uint64_t cnt = 1024*1024;
+    uint64_t cnt = blkcnt;
     iovec *iov = rb.iov_;
 
 
@@ -178,26 +178,41 @@ static int io_idx_test_r()
         }
     }
 
-    for(int i = 0; i < 1024*1024; i++)
+    for(int i = 0; i < blkcnt; i++)
     {
         iovec *cur = iov+i;
         read_iov2(cur,i);
     }
+    rb.release();
 
-    printf("check data ok\n");
+    
 
     return 0;
 }
 static int io_test_data_ok()
 {
-    io_idx_test_w();
-    io_idx_test_r();
+    io_idx_test_w(1024*1024);
+    io_idx_test_r(1024*1024);
+    printf("io_test_data_ok ok\n");
     return 0;
+}
+
+
+
+static void io_test_data_ok10000()
+{
+    for (size_t i = 0; i < 10000; i++)
+    {
+        io_idx_test_w(100);
+        io_idx_test_r(100);
+        printf("io_test_data_ok10000 ok %d\n",i);
+    }
+    printf("io_test_data_ok10000 ok\n");
 }
 static void io_test()
 {
     //io_test2();
     io_test_data_ok();
-
+    io_test_data_ok10000();
 
 }
