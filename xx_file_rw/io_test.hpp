@@ -75,6 +75,7 @@ static void read_iov2(iovec *iov,uint64_t val)
 }
 
 
+
 static int io_idx_test_w()
 {
     io_meta m;
@@ -110,8 +111,9 @@ static int io_idx_test_w()
     {
         uint32_t written = 0;
         int wret = iow.write_data(iov+start,cnt,written);
-        printf("written = %u\n",written);
-        printf("wret = %d\n",wret);
+        printf("written = %u ",written);
+        printf("wret = %d ",wret);
+        printf("cnt = %ju \n",cnt);
 
         if (wret == 0)
         {
@@ -124,6 +126,7 @@ static int io_idx_test_w()
             exit(0);
         }
     }
+    return 0;
 }
 
 
@@ -160,8 +163,9 @@ static int io_idx_test_r()
     {
         uint32_t readed = 0;
         int rret = ior.read_data(iov+start,cnt,start,readed);
-        printf("readed = %u\n",readed);
-        printf("rret = %d\n",rret);
+        printf("readed = %u ",readed);
+        printf("rret = %d ",rret);
+        printf("cnt = %ju \n",cnt);
         if (rret == 0)
         {
             start += readed;
@@ -188,7 +192,7 @@ static int io_test_data_ok()
 {
     io_idx_test_w();
     io_idx_test_r();
-
+    return 0;
 }
 static void io_test()
 {
