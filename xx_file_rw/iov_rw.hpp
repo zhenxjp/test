@@ -69,6 +69,7 @@ static void rb_reader(rb_iov *rb)
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
+            
             read_iov(iov+i,idx++);
         }
         rb->reader_done(cnt);
