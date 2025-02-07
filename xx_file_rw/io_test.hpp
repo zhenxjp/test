@@ -228,7 +228,7 @@ struct io_tester2
     rb_iov *rb = nullptr;
     rb_iov *rb2 = nullptr;
 
-    uint64_t max = 100*1000;
+    uint64_t max = 1*1000*1000;
 
     io_context ctx;
 };
@@ -305,7 +305,7 @@ static void io_reader(io_tester2 *gt_ptr )
         cnt = std::min(cnt,(uint64_t)1024);
 
         uint32_t readed = 0;
-        auto io_ret = ior.read_data(iov,cnt,0,readed);
+        auto io_ret = ior.read_data(iov,cnt,GT.io_r_cnt,readed);
         if (io_ret != 0)
         {
             printf("io_ret = %d\n",io_ret);
@@ -334,7 +334,7 @@ static void rb_reader(io_tester2 *gt_ptr)
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
+            // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
             read_iov2(iov+i,idx);
             ++idx;
 
@@ -349,7 +349,7 @@ static void rb_reader(io_tester2 *gt_ptr)
 
 void io_test_data_ok_w_r_p(io_tester2 &GT,io_tester2 &last)
 {
-    sleep_ms(1000);
+    sleep_ms(100);
     printf("rb_w_cnt = %ju ",GT.rb_w_cnt-last.rb_w_cnt);
     printf("io_w_cnt = %ju ",GT.io_w_cnt-last.io_w_cnt);
     printf("io_r_cnt = %ju ",GT.io_r_cnt-last.io_r_cnt);
@@ -395,10 +395,10 @@ static void io_test_data_ok_w_r()
     io_test_data_ok_w_r_p(GT,last);
 
 
-    // t1.join();
-    // t2.join();
-    // t3.join();
-    // t4.join();
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
 }
 
 
