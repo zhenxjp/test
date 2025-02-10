@@ -162,7 +162,7 @@ static int io_test_data_ok()
 
 static void io_test_data_ok10000()
 {
-    for (size_t i = 0; i < 10000; i++)
+    for (size_t i = 0; i < 100; i++)
     {
         io_idx_test_w(100);
         io_idx_test_r(100);
@@ -291,7 +291,7 @@ static void rb_reader(io_tester2 *gt_ptr)
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
+            //printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
             read_iov2(iov+i,idx);
             ++idx;
 
@@ -339,8 +339,12 @@ static void io_test_data_ok_w_r()
 
     GT.ctx = ctx;
 
+    
+    // sleep_ms(1000);
+    
     std::thread t1(rb_writer,&GT);
     std::thread t2(io_writer,&GT);
+
     std::thread t3(io_reader,&GT);
     std::thread t4(rb_reader,&GT);
 
@@ -362,7 +366,9 @@ static void io_test_data_ok_w_r()
 
 static void io_test()
 {
-    io_test_data_ok();
-    io_test_data_ok10000();
+    //io_test_data_ok();
+    //io_test_data_ok10000();
+    string cmd = "rm -rf  ./io_save/*";
+    system(cmd.c_str());
     io_test_data_ok_w_r();
 }

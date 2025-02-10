@@ -8,7 +8,7 @@
 int main(int argc, char** argv)
 {
     // iov_rw();
-    io_test();
+     io_test();
 
     //io_perf::test();
     return 0;
