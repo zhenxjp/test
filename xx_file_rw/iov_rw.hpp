@@ -121,9 +121,9 @@ static void io_reader()
 static void iov_w()
 {
     GT.rb = new rb_iov;
-    GT.rb->init(1024*1024,1024,true);
+    GT.rb->init(RB_CNT,1024,true);
     GT.rb2 = new rb_iov;
-    GT.rb2->init(1024*1024,1024,true);
+    GT.rb2->init(RB_CNT,1024,true);
 
     GT.path = "./io_test";
 
@@ -139,25 +139,9 @@ static void iov_w()
         || (GT.io_w_cnt < GT.max)
         )
     {
-        io_tester cur = GT;
-        // 打印last和cur的变化值
-        printf("rb_w_cnt diff: %ju,rb_r_cnt diff: %ju,io_w_cnt diff: %ju,io_r_cnt diff: %ju\n", 
-            cur.rb_w_cnt - last.rb_w_cnt,
-            cur.rb_r_cnt - last.rb_r_cnt,
-            cur.io_w_cnt - last.io_w_cnt,
-            cur.io_r_cnt - last.io_r_cnt);
-
-        //  打印cur信息
-        printf("rb_w_cnt: %ju,rb_r_cnt: %ju,io_w_cnt: %ju,io_r_cnt: %ju\n", 
-            cur.rb_w_cnt,
-            cur.rb_r_cnt,
-            cur.io_w_cnt,
-            cur.io_r_cnt);
-
-        last = cur;
-
-        sleep_ms(1000);
+        io_test_data_ok_w_r_p(GT,last);
     }
+    io_test_data_ok_w_r_p(GT,last);
 
     t1.join();
     t2.join();

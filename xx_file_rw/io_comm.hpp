@@ -108,3 +108,22 @@ static void rb_reader(io_tester *gt_ptr)
             break;
     }
 }
+
+
+static void io_test_data_ok_w_r_p(io_tester &GT,io_tester &last)
+{
+    sleep_ms(1000);
+    io_tester cur = GT;
+
+    printf("rb_w_cnt = %ju ",cur.rb_w_cnt-last.rb_w_cnt);
+    printf("io_w_cnt = %ju ",cur.io_w_cnt-last.io_w_cnt);
+    printf("io_r_cnt = %ju ",cur.io_r_cnt-last.io_r_cnt);
+    printf("rb_r_cnt = %ju ",cur.rb_r_cnt-last.rb_r_cnt);
+
+    printf("all = %ju ",cur.io_r_cnt);    
+    printf("\n");
+    GT.rb->print_info("rb1 ");
+    GT.rb2->print_info("rb2 ");
+    last = cur;
+    
+}
