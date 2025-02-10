@@ -141,43 +141,6 @@ static void io_test_data_ok10000()
 
 
 
-struct io_tester
-{
-    uint64_t rb_w_cnt = 0;
-    uint64_t rb_r_cnt = 0;
-
-    uint64_t io_w_cnt = 0;
-    uint64_t io_r_cnt = 0;
-
-
-    rb_iov *rb = nullptr;
-    rb_iov *rb2 = nullptr;
-
-    uint64_t max = 1*1000*1000;
-
-    io_context ctx;
-};
-
-static void rb_writer(io_tester *gt_ptr )
-{
-    io_tester &GT = *gt_ptr;
-    int idx = 0;
-    while (true)
-    {
-        uint64_t cnt = 0;
-        iovec *iov = GT.rb->writer_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
-        for(int i = 0; i < cnt; i++)
-        {
-            write_iov_perf(iov+i,idx);
-            ++idx;
-        }
-        GT.rb->writer_done(cnt);
-        GT.rb_w_cnt += cnt;
-        if (GT.rb_w_cnt >= GT.max)
-            break;
-    }
-}
 
 static int io_writer(io_tester *gt_ptr )
 {

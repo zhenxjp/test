@@ -1,33 +1,10 @@
 #pragma once
 #include "../../common/all.hpp"
 #include "io_comm.hpp"
-namespace io_perf
-{
 
 
 
-static void rb_writer(io_tester *gt_ptr )
-{
-    io_tester &GT = *gt_ptr;
-    int idx = 0;
-    while (true)
-    {
-        uint64_t cnt = 0;
-        iovec *iov = GT.rb->writer_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
-        for(int i = 0; i < cnt; i++)
-        {
-            write_iov_perf(iov+i,idx);
-            ++idx;
-        }
-        GT.rb->writer_done(cnt);
-        GT.rb_w_cnt += cnt;
-        if (GT.rb_w_cnt >= GT.max)
-            break;
-    }
-}
-
-static int io_writer(io_tester *gt_ptr )
+static int io_writer_io(io_tester *gt_ptr )
 {
     io_tester &GT = *gt_ptr;
 
@@ -93,31 +70,6 @@ static void io_reader(io_tester *gt_ptr )
 }
 
 
-static void rb_reader(io_tester *gt_ptr)
-{
-    io_tester &GT = *gt_ptr;
-    auto rb = GT.rb2;
-    int idx = 0;
-    while (true)
-    {
-        uint64_t cnt = 0;
-        iovec *iov = rb->reader_get_blk(cnt);
-        if(0 == cnt)
-            continue;
-        cnt = std::min(cnt,(uint64_t)1024);
-        for(int i = 0; i < cnt; i++)
-        {
-            // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
-            read_iov_perf(iov+i,idx);
-            ++idx;
-
-        }
-        rb->reader_done(cnt);
-        GT.rb_r_cnt += cnt;
-        if (GT.rb_r_cnt >= GT.max)
-            break;
-    }
-}
 
 
 void io_test_data_ok_w_r_p(io_tester &GT,io_tester &last)
@@ -135,7 +87,7 @@ void io_test_data_ok_w_r_p(io_tester &GT,io_tester &last)
     last = GT;
     
 }
-static void test()
+static void io_perf_test()
 {
     io_tester GT;
     GT.rb = new rb_iov;
@@ -158,7 +110,7 @@ static void test()
     GT.ctx = ctx;
 
     std::thread t1(rb_writer,&GT);
-    std::thread t2(io_writer,&GT);
+    std::thread t2(io_writer_io,&GT);
     //std::thread t3(io_reader,&GT);
     //std::thread t4(rb_reader,&GT);
 
@@ -185,6 +137,3 @@ static void test()
 
 
 
-
-
-}

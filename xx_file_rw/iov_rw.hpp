@@ -4,53 +4,6 @@
 
 static io_tester GT;
 
-///////////////////////////////////////////////////////////////////
-
-static void rb_writer(io_tester *gt_ptr )
-{
-    io_tester &GT = *gt_ptr;
-    int idx = 0;
-    while (true)
-    {
-        uint64_t cnt = 0;
-        iovec *iov = GT.rb->writer_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
-        for(int i = 0; i < cnt; i++)
-        {
-            write_iov_perf(iov+i,idx);
-            ++idx;
-        }
-        GT.rb->writer_done(cnt);
-        GT.rb_w_cnt += cnt;
-        if (GT.rb_w_cnt >= GT.max)
-            break;
-    }
-}
-///////////////////////////////////////////////////////////////////
-
-
-
-static void rb_reader(rb_iov *rb)
-{
-    int idx = 0;
-    while (true)
-    {
-        uint64_t cnt = 0;
-        iovec *iov = rb->reader_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
-        for(int i = 0; i < cnt; i++)
-        {
-            
-            read_iov_perf(iov+i,idx++);
-        }
-        rb->reader_done(cnt);
-        GT.rb_r_cnt += cnt;
-        if (GT.rb_r_cnt >= GT.max)
-            break;
-    }
-}
-
-
 
 
 
@@ -222,7 +175,7 @@ static void iov_r()
 
     // 启动线程
     std::thread t3(io_reader);
-    std::thread t4(rb_reader,GT.rb2);
+    std::thread t4(rb_reader,&GT);
 
     sleep_ms(1000);
     io_tester last = {0};
