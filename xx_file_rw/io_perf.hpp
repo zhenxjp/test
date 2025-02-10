@@ -5,30 +5,10 @@ namespace io_perf
 {
 
 
-#define RB_CNT 1024*1024
-#define IO_MAX 1024*1024*100
 
-
-struct io_tester2
+static void rb_writer(io_tester *gt_ptr )
 {
-    uint64_t rb_w_cnt = 0;
-    uint64_t rb_r_cnt = 0;
-
-    uint64_t io_w_cnt = 0;
-    uint64_t io_r_cnt = 0;
-
-
-    rb_iov *rb = nullptr;
-    rb_iov *rb2 = nullptr;
-
-    uint64_t max = IO_MAX;
-
-    io_context ctx;
-};
-
-static void rb_writer(io_tester2 *gt_ptr )
-{
-    io_tester2 &GT = *gt_ptr;
+    io_tester &GT = *gt_ptr;
     int idx = 0;
     while (true)
     {
@@ -47,9 +27,9 @@ static void rb_writer(io_tester2 *gt_ptr )
     }
 }
 
-static int io_writer(io_tester2 *gt_ptr )
+static int io_writer(io_tester *gt_ptr )
 {
-    io_tester2 &GT = *gt_ptr;
+    io_tester &GT = *gt_ptr;
 
     GT.ctx.rw_type_ = io_rw_type::rw_write;
     GT.ctx.init_type_ = io_init_type::init_new;
@@ -83,9 +63,9 @@ static int io_writer(io_tester2 *gt_ptr )
     return 0;
 }
 
-static void io_reader(io_tester2 *gt_ptr )
+static void io_reader(io_tester *gt_ptr )
 {
-    io_tester2 &GT = *gt_ptr;
+    io_tester &GT = *gt_ptr;
     GT.ctx.rw_type_ = io_rw_type::rw_read;
 
     io ior;
@@ -113,9 +93,9 @@ static void io_reader(io_tester2 *gt_ptr )
 }
 
 
-static void rb_reader(io_tester2 *gt_ptr)
+static void rb_reader(io_tester *gt_ptr)
 {
-    io_tester2 &GT = *gt_ptr;
+    io_tester &GT = *gt_ptr;
     auto rb = GT.rb2;
     int idx = 0;
     while (true)
@@ -140,7 +120,7 @@ static void rb_reader(io_tester2 *gt_ptr)
 }
 
 
-void io_test_data_ok_w_r_p(io_tester2 &GT,io_tester2 &last)
+void io_test_data_ok_w_r_p(io_tester &GT,io_tester &last)
 {
     sleep_ms(100);
     printf("rb_w_cnt = %ju ",GT.rb_w_cnt-last.rb_w_cnt);
@@ -157,7 +137,7 @@ void io_test_data_ok_w_r_p(io_tester2 &GT,io_tester2 &last)
 }
 static void test()
 {
-    io_tester2 GT;
+    io_tester GT;
     GT.rb = new rb_iov;
     GT.rb->init(RB_CNT,1024,true);
     GT.rb2 = new rb_iov;
@@ -182,7 +162,7 @@ static void test()
     //std::thread t3(io_reader,&GT);
     //std::thread t4(rb_reader,&GT);
 
-    io_tester2 last;
+    io_tester last;
     while(GT.rb_r_cnt < GT.max)
     {
         io_test_data_ok_w_r_p(GT,last);

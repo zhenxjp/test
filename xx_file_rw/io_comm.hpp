@@ -1,6 +1,28 @@
 #pragma once
 #include "../../common/all.hpp"
 
+#define RB_CNT 1024*1024
+#define IO_MAX 1024*1024*100
+
+struct io_tester
+{
+    uint64_t rb_w_cnt = 0;
+    uint64_t rb_r_cnt = 0;
+
+    uint64_t io_w_cnt = 0;
+    uint64_t io_r_cnt = 0;
+
+
+    rb_iov *rb = nullptr;
+    rb_iov *rb2 = nullptr;
+
+
+    io_context ctx;
+
+    uint64_t max = IO_MAX;
+    string path;
+};
+
 static inline uint64_t get_cnt(uint64_t idx)
 {
     return idx % 10+35;

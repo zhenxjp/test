@@ -1,28 +1,14 @@
 #pragma once
 #include "../../common/all.hpp"
 #include "io_comm.hpp"
-struct io_tester
-{
-    uint64_t rb_w_cnt = 0;
-    uint64_t rb_r_cnt = 0;
 
-    uint64_t io_w_cnt = 0;
-    uint64_t io_r_cnt = 0;
-
-    std::string path = "";
-
-    rb_iov *rb = nullptr;
-    rb_iov *rb2 = nullptr;
-
-    uint64_t max = 10*1000*1000;
-};
 static io_tester GT;
 
 ///////////////////////////////////////////////////////////////////
 
-static void rb_writer(io_tester2 *gt_ptr )
+static void rb_writer(io_tester *gt_ptr )
 {
-    io_tester2 &GT = *gt_ptr;
+    io_tester &GT = *gt_ptr;
     int idx = 0;
     while (true)
     {
@@ -189,7 +175,7 @@ static void iov_w()
     GT.path = "./io_test";
 
     // 启动线程
-    std::thread t1(rb_writer);
+    std::thread t1(rb_writer,&GT);
     std::thread t2(io_writer);
 
 
