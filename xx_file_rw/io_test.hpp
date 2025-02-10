@@ -2,49 +2,6 @@
 #include "../../common/all.hpp"
 
 
-
-// static void io_test2()
-// {
-//     io_context ctx;
-    
-//     io i;
-//     i.init(ctx);
-
-//     for (size_t idx = 0; idx < 20000; idx++)
-//     {
-//         i.idx_->add(idx);
-//     }
-
-//     for (size_t idx = 0; idx < 20000; idx++)
-//     {
-//         uint32_t len = i.idx_->get_len(idx);
-//         if (len != idx)
-//         {
-//             cout<<"idx = "<<idx<<" len = "<<len<<endl;
-//             exit(0);
-//         }
-        
-//     }
-
-//     i.idx_->release();
-
-//     ctx.init_type_ = io_init_type::init_exist;
-//     io i2;
-//     i2.init(ctx);
-//     for (size_t idx = 0; idx < 20000; idx++)
-//     {
-//         uint32_t len = i2.idx_->get_len(idx);
-//         if (len != idx)
-//         {
-//             cout<<"idx = "<<idx<<" len = "<<len<<endl;
-//             exit(0);
-//         }
-        
-//     }
-
-// }
-
-
 static uint64_t get_cnt(uint64_t idx)
 {
     return idx % 50+10;
@@ -405,8 +362,7 @@ static void io_test_data_ok_w_r()
 
 static void io_test()
 {
-    //io_test2();
-    //io_test_data_ok();
-    //io_test_data_ok10000();
+    io_test_data_ok();
+    io_test_data_ok10000();
     io_test_data_ok_w_r();
 }
