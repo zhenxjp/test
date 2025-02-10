@@ -1,39 +1,7 @@
 #pragma once
 #include "../../common/all.hpp"
+#include "io_comm.hpp"
 
-
-static uint64_t get_cnt(uint64_t idx)
-{
-    return idx % 50+10;
-}
-
-static void write_iov2(iovec *iov,uint64_t val)
-{
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < get_cnt(val); j++)
-    {
-        p[j] = val;
-    }
-    iov->iov_len = get_cnt(val)*sizeof(uint64_t);
-}
-
-static void read_iov2(iovec *iov,uint64_t val)
-{
-    if(iov->iov_len != get_cnt(val)*sizeof(uint64_t))
-    {
-        printf("error iov_len=%lu,ok=%lu\n",iov->iov_len,get_cnt(val)*sizeof(uint64_t));
-        exit(0);
-    }
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < get_cnt(val); j++)
-    {
-        if(p[j] != val)
-        {
-            printf("read_iov error val = %ju\n",val);
-            exit(0);
-        }
-    }
-}
 
 
 
@@ -63,7 +31,7 @@ static int io_idx_test_w(uint32_t blkcnt)
     iovec *iov = rb.iov_;
     for(int i = 0; i < cnt; i++)
     {
-        write_iov2(iov+i,i);
+        write_iov_perf(iov+i,i);
 
     }
 
@@ -142,7 +110,7 @@ static int io_idx_test_r(uint32_t blkcnt)
     for(int i = 0; i < blkcnt; i++)
     {
         iovec *cur = iov+i;
-        read_iov2(cur,i);
+        read_iov_perf(cur,i);
     }
     rb.release();
 
@@ -201,7 +169,7 @@ static void rb_writer(io_tester2 *gt_ptr )
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            write_iov2(iov+i,idx);
+            write_iov_perf(iov+i,idx);
             ++idx;
         }
         GT.rb->writer_done(cnt);
@@ -292,7 +260,7 @@ static void rb_reader(io_tester2 *gt_ptr)
         for(int i = 0; i < cnt; i++)
         {
             //printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
-            read_iov2(iov+i,idx);
+            read_iov_perf(iov+i,idx);
             ++idx;
 
         }

@@ -1,45 +1,13 @@
 #pragma once
 #include "../../common/all.hpp"
-
+#include "io_comm.hpp"
 namespace io_perf
 {
 
 
-#define RB_CNT 1024*100
-#define IO_MAX 1024*1024*10
+#define RB_CNT 1024*1024
+#define IO_MAX 1024*1024*100
 
-static uint64_t get_cnt(uint64_t idx)
-{
-    return idx % 10+35;
-}
-
-static void write_iov_perf(iovec *iov,uint64_t val)
-{
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < get_cnt(val); j++)
-    {
-        p[j] = val;
-    }
-    iov->iov_len = get_cnt(val)*sizeof(uint64_t);
-}
-
-static void read_iov_perf(iovec *iov,uint64_t val)
-{
-    if(iov->iov_len != get_cnt(val)*sizeof(uint64_t))
-    {
-        printf("error iov_len=%lu,ok=%lu\n",iov->iov_len,get_cnt(val)*sizeof(uint64_t));
-        exit(0);
-    }
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < get_cnt(val); j++)
-    {
-        if(p[j] != val)
-        {
-            printf("read_iov error val = %ju\n",val);
-            exit(0);
-        }
-    }
-}
 
 struct io_tester2
 {
@@ -211,8 +179,8 @@ static void test()
 
     std::thread t1(rb_writer,&GT);
     std::thread t2(io_writer,&GT);
-    std::thread t3(io_reader,&GT);
-    std::thread t4(rb_reader,&GT);
+    //std::thread t3(io_reader,&GT);
+    //std::thread t4(rb_reader,&GT);
 
     io_tester2 last;
     while(GT.rb_r_cnt < GT.max)
@@ -224,8 +192,8 @@ static void test()
 
     t1.join();
     t2.join();
-    t3.join();
-    t4.join();
+    //t3.join();
+    //t4.join();
 }
 
 

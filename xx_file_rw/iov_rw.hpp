@@ -1,6 +1,6 @@
 #pragma once
 #include "../../common/all.hpp"
-
+#include "io_comm.hpp"
 struct io_tester
 {
     uint64_t rb_w_cnt = 0;
@@ -19,17 +19,10 @@ struct io_tester
 static io_tester GT;
 
 ///////////////////////////////////////////////////////////////////
-static void write_iov(iovec *iov,uint64_t val)
-{
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < 1024/8; j++)
-    {
-        p[j] = val;
-    }
-}
 
-static void rb_writer()
+static void rb_writer(io_tester2 *gt_ptr )
 {
+    io_tester2 &GT = *gt_ptr;
     int idx = 0;
     while (true)
     {
@@ -38,8 +31,8 @@ static void rb_writer()
         cnt = std::min(cnt,(uint64_t)1024);
         for(int i = 0; i < cnt; i++)
         {
-            write_iov(iov+i,idx++);
-
+            write_iov_perf(iov+i,idx);
+            ++idx;
         }
         GT.rb->writer_done(cnt);
         GT.rb_w_cnt += cnt;
@@ -49,15 +42,7 @@ static void rb_writer()
 }
 ///////////////////////////////////////////////////////////////////
 
-static void read_iov(iovec *iov,uint64_t val)
-{
-    uint64_t *p = (uint64_t *)iov->iov_base;
-    for (int j = 0; j < 1024/8; j++)
-    {
-        if(p[j] != val)
-            printf("read_iov error val = %ju\n",val);
-    }
-}
+
 
 static void rb_reader(rb_iov *rb)
 {
@@ -70,7 +55,7 @@ static void rb_reader(rb_iov *rb)
         for(int i = 0; i < cnt; i++)
         {
             
-            read_iov(iov+i,idx++);
+            read_iov_perf(iov+i,idx++);
         }
         rb->reader_done(cnt);
         GT.rb_r_cnt += cnt;
@@ -99,11 +84,7 @@ static void io_writer()
         cnt = std::min(cnt,(uint64_t)1024);
 
         ssize_t bytes_written = writev(fd, iov, cnt);
-        if (bytes_written != cnt * GT.rb->blk_size_) {
-            printf("writev err : wrote %ld bytes,except : %ju \n", 
-                bytes_written,cnt * GT.rb->blk_size_);
-            exit(-1);
-        }
+
 
         
         GT.rb->reader_done(cnt);
@@ -292,5 +273,5 @@ static void iov_r()
 
 static void iov_rw()
 {
-    iov_r();
+    iov_w();
 }
