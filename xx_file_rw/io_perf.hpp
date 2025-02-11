@@ -40,7 +40,7 @@ static int io_writer_io(io_tester *gt_ptr )
     return 0;
 }
 
-static void io_reader(io_tester *gt_ptr )
+static void io_reader_io(io_tester *gt_ptr )
 {
     io_tester &GT = *gt_ptr;
     GT.ctx.rw_type_ = io_rw_type::rw_read;
@@ -70,20 +70,17 @@ static void io_reader(io_tester *gt_ptr )
 }
 
 
-
-
-
 static void io_perf_test()
 {
     io_tester GT;
     GT.rb = new rb_iov;
-    GT.rb->init(RB_CNT,1024,true);
+    GT.rb->init(RB_CNT,RB_SIZE,true);
     GT.rb2 = new rb_iov;
-    GT.rb2->init(RB_CNT,1024,true);
+    GT.rb2->init(RB_CNT,RB_SIZE,true);
 
     io_meta m;
-    m.blk_cnt_max_ = 1024*1024;
-    m.blk_size_ = 1024;
+    m.blk_cnt_max_ = IO_ONE;
+    m.blk_size_ = RB_SIZE;
     m.io_type_ = 0;
 
     io_context ctx;
@@ -97,8 +94,8 @@ static void io_perf_test()
 
     std::thread t1(rb_writer,&GT);
     std::thread t2(io_writer_io,&GT);
-    //std::thread t3(io_reader,&GT);
-    //std::thread t4(rb_reader,&GT);
+    std::thread t3(io_reader_io,&GT);
+    std::thread t4(rb_reader,&GT);
 
     io_tester last;
     while(GT.rb_r_cnt < GT.max)
@@ -110,8 +107,8 @@ static void io_perf_test()
 
     t1.join();
     t2.join();
-    //t3.join();
-    //t4.join();
+    t3.join();
+    t4.join();
 }
 
 

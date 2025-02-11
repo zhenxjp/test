@@ -3,6 +3,8 @@
 
 #define RB_CNT 1024*1024
 #define IO_MAX 1024*1024*10
+#define IO_ONE 1024*1024
+#define RB_SIZE 1024
 
 struct io_tester
 {
