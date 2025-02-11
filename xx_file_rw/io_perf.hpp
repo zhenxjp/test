@@ -85,8 +85,7 @@ static void io_perf_test()
 
     io_context ctx;
     ctx.meta_ = m;
-    ctx.path_ = "./io_save/";
-    ctx.prefix_ = "io_pre";
+
     ctx.rw_type_ = io_rw_type::rw_write;
     ctx.init_type_ = io_init_type::init_new;
 

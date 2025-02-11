@@ -7,15 +7,8 @@
 
 static int io_idx_test_w(uint32_t blkcnt)
 {
-    io_meta m;
-    m.blk_cnt_max_ = 256;
-    m.blk_size_ = 1024;
-    m.io_type_ = 0;
 
     io_context ctx;
-    ctx.meta_ = m;
-    ctx.path_ = "./io_save/";
-    ctx.prefix_ = "io_pre";
     ctx.rw_type_ = io_rw_type::rw_write;
     ctx.init_type_ = io_init_type::init_new;
 
@@ -71,8 +64,6 @@ static int io_idx_test_r(uint32_t blkcnt)
 
     io_context ctx;
     ctx.meta_ = m;
-    ctx.path_ = "./io_save/";
-    ctx.prefix_ = "io_pre";
     ctx.rw_type_ = io_rw_type::rw_read;
 
     // read
@@ -134,16 +125,91 @@ static void io_test_data_ok10000()
     {
         io_idx_test_w(100);
         io_idx_test_r(100);
-        printf("io_test_data_ok10000 ok %jd\n",i);
     }
     printf("io_test_data_ok10000 ok\n");
 }
 
 
+// 删除指定文件后面 N 个字节的函数
+static int delete_last_n_bytes(const char *filename, size_t n) {
+    struct stat file_stat;
+    // 获取文件的信息
+    if (stat(filename, &file_stat) == -1) {
+        perror("Failed to get file information");
+        return -1;
+    }
+    // 检查文件大小是否足够减去 N 个字节
+    if ((size_t)file_stat.st_size < n) {
+        fprintf(stderr, "File size is less than %zu bytes.\n", n);
+        return -1;
+    }
+    // 计算截断后的文件大小
+    off_t new_size = file_stat.st_size - (off_t)n;
+    // 截断文件
+    if (truncate(filename, new_size) == -1) {
+        perror("Failed to truncate file");
+        return -1;
+    }
+    return 0;
+}
+static int io_haf_data()
+{
+    io_idx_test_w(2000);
+    delete_last_n_bytes("./io_save/io_pre.index",3);
+
+    get_idx("./io_save/io_pre.",true);
+
+    io_context ctx;
+    ctx.rw_type_ = io_rw_type::rw_write;
+    ctx.init_type_ = io_init_type::init_exist;
+
+    io iow;
+    auto ret = iow.init(ctx);
+    XASSERT(ret == 0);
+    cout<<iow.idx_->cnt()<<endl;
+
+    uint32_t readed = 0;
+    int read_ret = 0;
+    char sz[RB_SIZE];
+    iovec iov;
+    iov.iov_base = sz;
+    iov.iov_len = RB_SIZE;
+
+    io_context ctx2;
+    ctx2.rw_type_ = io_rw_type::rw_read;
+
+    // read
+    io ior;
+    ret = ior.init(ctx2);
+    XASSERT(ret == 0);
+    read_ret = ior.read_data(&iov,1,1999,readed);
+    XASSERT(read_ret==0);
+    XASSERT(readed==0);
+
+    iovec iovw;
+    iovw.iov_base=(void*)"hello";
+    iovw.iov_len=5;
+    uint32_t written = 0;
+    auto wret = iow.write_data(&iovw,1,written);
+    XASSERT(written==1);
+    XASSERT(wret==0);
+
+    {
+
+        read_ret = ior.read_data(&iov,1,1999,readed);
+        XASSERT(read_ret==0);
+        XASSERT(readed==1);
+        XASSERT(string((char*)iov.iov_base,iov.iov_len) == "hello");
+    }
+
+    printf("io_haf_data ok\n");
+    return 0;
+}
 
 static void io_test()
 {
     io_test_data_ok();
     io_test_data_ok10000();
 
+    io_haf_data();
 }
