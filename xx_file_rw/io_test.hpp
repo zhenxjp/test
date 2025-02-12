@@ -319,9 +319,39 @@ static int io_test_random_read()
     return 0;
 }
 
+
+static int io_test_read_init_err()
+{
+    io_idx_test_w(10);
+
+    io_context ctx;
+    ctx.meta_.blk_size_ = 2048;
+    ctx.rw_type_ = io_rw_type::rw_read;
+
+    // read
+    io ior;
+    auto ret = ior.init(ctx);
+    XASSERT(ret != 0);
+
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
+    {
+        io_context ctx;
+        ctx.meta_.blk_size_ = 2048;
+
+        ctx.rw_type_ = io_rw_type::rw_write;
+        ctx.init_type_ = io_init_type::init_exist;
+
+        io iow;
+        auto ret = iow.init(ctx);
+        XASSERT(ret != 0);
+    }
+    printf("io_test_read_init_err ok\n");
+    return 0;
+}
+
 static void io_test()
 {
-    if(0)
+    if(1)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
@@ -333,10 +363,15 @@ static void io_test()
         idx_op(IO_IDX_KEY_DEFAULT,"del");
         io_test_xuxie_big();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_random_read();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
     }
     
-    io_test_random_read();
+    
+
+    io_test_read_init_err();
     idx_op(IO_IDX_KEY_DEFAULT,"del");
+
 
 
     
