@@ -6,6 +6,9 @@
 #define IO_ONE 1024*1024
 #define RB_SIZE 1024
 
+
+#define IO_IDX_KEY_DEFAULT "./io_save/io_pre."
+
 struct io_tester
 {
     uint64_t rb_w_cnt = 0;
@@ -32,6 +35,7 @@ static inline uint64_t get_cnt(uint64_t idx)
 
 static void write_iov_perf(iovec *iov,uint64_t val)
 {
+    //printf("writeiov val = %ju\n",val);
     uint64_t *p = (uint64_t *)iov->iov_base;
     auto xxcnt = get_cnt(val);
     for (int j = 0; j < xxcnt; j++)
@@ -39,10 +43,12 @@ static void write_iov_perf(iovec *iov,uint64_t val)
         p[j] = val;
     }
     iov->iov_len = xxcnt*sizeof(uint64_t);
+    
 }
 
 static void read_iov_perf(iovec *iov,uint64_t val)
 {
+    //printf("read_iov val = %ju\n",val);
     auto xxcnt = get_cnt(val);
     if(iov->iov_len != xxcnt*sizeof(uint64_t))
     {
@@ -55,10 +61,12 @@ static void read_iov_perf(iovec *iov,uint64_t val)
     {
         if(p[j] != val)
         {
-            printf("read_iov error val = %ju\n",val);
+            printf("read_iov error val = %ju,real=%ju\n",val,p[j]);
             exit(0);
         }
     }
+    
+
 }
 
 

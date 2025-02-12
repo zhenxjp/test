@@ -57,13 +57,8 @@ static int io_idx_test_w(uint32_t blkcnt)
 
 static int io_idx_test_r(uint32_t blkcnt)
 {
-    io_meta m;
-    m.blk_cnt_max_ = 256;
-    m.blk_size_ = 1024;
-    m.io_type_ = 0;
 
     io_context ctx;
-    ctx.meta_ = m;
     ctx.rw_type_ = io_rw_type::rw_read;
 
     // read
@@ -125,6 +120,7 @@ static void io_test_data_ok10000()
     {
         io_idx_test_w(100);
         io_idx_test_r(100);
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
     }
     printf("io_test_data_ok10000 ok\n");
 }
@@ -152,12 +148,12 @@ static int delete_last_n_bytes(const char *filename, size_t n) {
     }
     return 0;
 }
-static int io_haf_data()
+static int io_test_haf_data()
 {
     io_idx_test_w(2000);
     delete_last_n_bytes("./io_save/io_pre.index",3);
 
-    get_idx("./io_save/io_pre.",true);
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
 
     io_context ctx;
     ctx.rw_type_ = io_rw_type::rw_write;
@@ -195,7 +191,6 @@ static int io_haf_data()
     XASSERT(wret==0);
 
     {
-
         read_ret = ior.read_data(&iov,1,1999,readed);
         XASSERT(read_ret==0);
         XASSERT(readed==1);
@@ -206,10 +201,98 @@ static int io_haf_data()
     return 0;
 }
 
+
+static int io_idx_test_w_xuxie(uint32_t blkcnt)
+{
+
+    io_context ctx;
+    ctx.rw_type_ = io_rw_type::rw_write;
+    ctx.init_type_ = io_init_type::init_exist;
+
+    io iow;
+    auto ret = iow.init(ctx);
+    CHECK0_RETV(ret,0);
+
+
+    rb_iov rb;
+    rb.init(blkcnt,1024);
+
+    uint64_t cnt = blkcnt;
+    iovec *iov = rb.iov_;
+    uint64_t already = iow.idx_->cnt();
+    for(int i = 0; i < cnt; i++)
+    {
+        write_iov_perf(iov+i,i + already);
+
+    }
+    io_idx_test_r(10);
+
+    uint64_t start = 0;
+    while(cnt > 0)
+    {
+        uint32_t written = 0;
+        int wret = iow.write_data(iov+start,cnt,written);
+        // printf("written = %u ",written);
+        // printf("wret = %d ",wret);
+        // printf("cnt = %ju \n",cnt);
+
+        if (wret == 0)
+        {
+            start += written;
+            cnt -= written;
+        }
+        else
+        {
+            printf("wret = %d\n",wret);
+            exit(0);
+        }
+    }
+    return 0;
+}
+
+static int io_test_xuxie_data()
+{
+    io_idx_test_w(10);
+    io_idx_test_r(10);
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
+    io_idx_test_w_xuxie(10);
+    io_idx_test_r(10);
+    io_idx_test_r(20);
+
+    printf("io_test_xuxie_data ok\n");
+
+    return 0;
+}   
+
+static int io_test_xuxie_big()
+{
+    io_idx_test_w(100000);
+    io_idx_test_r(100000);
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
+    io_idx_test_w_xuxie(100000);
+    io_idx_test_r(100000);
+    io_idx_test_r(200000);
+
+    printf("io_test_xuxie_data ok\n");
+
+    return 0;
+}   
+
 static void io_test()
 {
-    io_test_data_ok();
-    io_test_data_ok10000();
+    if(1)
+    {
+        io_test_data_ok();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_data_ok10000();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_haf_data();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_xuxie_data();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
+    }
+    
+    
 
-    io_haf_data();
+    io_test_xuxie_big();
 }
