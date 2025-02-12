@@ -57,7 +57,6 @@ static int io_idx_test_w(uint32_t blkcnt)
 
 static int io_idx_test_r(uint32_t blkcnt)
 {
-
     io_context ctx;
     ctx.rw_type_ = io_rw_type::rw_read;
 
@@ -273,14 +272,56 @@ static int io_test_xuxie_big()
     io_idx_test_r(100000);
     io_idx_test_r(200000);
 
-    printf("io_test_xuxie_data ok\n");
+    printf("io_test_xuxie_big ok\n");
 
     return 0;
 }   
 
+
+static int io_test_random_read()
+{
+    io_idx_test_w(100000);
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
+    io_idx_test_w_xuxie(100000);
+
+    io_context ctx;
+    ctx.rw_type_ = io_rw_type::rw_read;
+
+    // read
+    io ior;
+    auto ret = ior.init(ctx);
+    
+    const uint32_t rb_blk_cnt = 1024;
+    rb_iov rb;
+    rb.init(rb_blk_cnt,1024);
+
+    for(int i = 0; i < 10000; i++)
+    {
+        uint64_t start = rand()%(100000 - rb_blk_cnt);
+        uint64_t cnt = 100 + rand()%(rb_blk_cnt - 200);
+        
+
+        uint32_t readed = 0;
+        int rret = ior.read_data(rb.iov_,cnt,start,readed);
+        XASSERT(err_ok == rret);
+        XASSERT(0 != readed);
+
+        for(int i = 0; i < readed; i++)
+        {
+            iovec *cur = rb.iov_+i;
+            read_iov_perf(cur,start+i);
+        }
+
+    }
+
+    printf("io_test_random_read ok\n");
+
+    return 0;
+}
+
 static void io_test()
 {
-    if(1)
+    if(0)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
@@ -290,9 +331,13 @@ static void io_test()
         idx_op(IO_IDX_KEY_DEFAULT,"del");
         io_test_xuxie_data();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_xuxie_big();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
     }
     
-    
+    io_test_random_read();
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
 
-    io_test_xuxie_big();
+
+    
 }

@@ -53,7 +53,6 @@ static void read_iov_perf(iovec *iov,uint64_t val)
     if(iov->iov_len != xxcnt*sizeof(uint64_t))
     {
         printf("error iov_len=%lu,ok=%lu\n",iov->iov_len,xxcnt*sizeof(uint64_t));
-        exit(0);
     }
     uint64_t *p = (uint64_t *)iov->iov_base;
     
@@ -62,7 +61,7 @@ static void read_iov_perf(iovec *iov,uint64_t val)
         if(p[j] != val)
         {
             printf("read_iov error val = %ju,real=%ju\n",val,p[j]);
-            exit(0);
+            XASSERT(0);
         }
     }
     
