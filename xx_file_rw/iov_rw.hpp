@@ -1,5 +1,4 @@
 #pragma once
-#include "../../common/all.hpp"
 #include "io_comm.hpp"
 
 static io_tester GT;
