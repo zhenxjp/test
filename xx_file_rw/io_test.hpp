@@ -348,9 +348,61 @@ static int io_test_read_init_err()
     return 0;
 }
 
+static uint64_t rcnt = 0;
+static void rb_ntf_reader(uint64_t val,rb_iov_ntf* rb)
+{
+    uint64_t cnt = 0;
+    while (true)
+    {
+        cnt = 0;
+        iovec *iov = rb->reader_get_blk(cnt);
+        int idx = rb->r_idx();
+
+        if(0 == cnt)
+            break;
+        rcnt = cnt;
+        for(int i = 0; i < cnt; i++)
+        {
+            // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
+            read_iov_perf(iov+i,idx);
+            ++idx;
+
+        }
+        rb->reader_done(cnt);
+        GT.rb_r_cnt += cnt;
+        if (GT.rb_r_cnt >= GT.max)
+            break;
+    }
+}
+
+static int io_test_io_evt()
+{
+    io_idx_test_w(10);
+    xepoll ee;
+    auto ret = ee.init();
+
+    rb_iov_ntf rb;
+    ret= rb.init(1024,1024);
+    int iret = rb.init_ee(&ee,std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
+
+    xior_evt io_evt;
+    io_context ctx;
+    ctx.rw_type_ = io_rw_type::rw_read;
+    iret = io_evt.init(ctx,&rb,&ee);
+
+    ee.wait(-1);
+    ee.wait(-1);
+    ee.wait(-1);
+
+    XASSERT(10 == rcnt);
+    printf("io_test_io_evt ok\n");
+
+    return 0;
+}
+
 static void io_test()
 {
-    if(1)
+    if(0)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
@@ -364,12 +416,13 @@ static void io_test()
         idx_op(IO_IDX_KEY_DEFAULT,"del");
         io_test_random_read();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_read_init_err();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
     }
     
-    
+    io_test_io_evt();
 
-    io_test_read_init_err();
-    idx_op(IO_IDX_KEY_DEFAULT,"del");
+    
 
 
 

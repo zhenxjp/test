@@ -2,6 +2,7 @@
 #include "xio.hpp"
 #include "xrb.hpp"
 #include "xtime.hpp"
+#include "xevt.hpp"
 
 #define RB_CNT 1024*1024
 #define IO_MAX 1024*1024*10
