@@ -360,41 +360,42 @@ static void rb_ntf_reader(uint64_t val,rb_iov_ntf* rb)
 
         if(0 == cnt)
             break;
-        rcnt = cnt;
+        
         for(int i = 0; i < cnt; i++)
         {
             // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);
             read_iov_perf(iov+i,idx);
             ++idx;
-
         }
         rb->reader_done(cnt);
-        GT.rb_r_cnt += cnt;
-        if (GT.rb_r_cnt >= GT.max)
-            break;
+        rcnt += cnt;
     }
 }
 
 static int io_test_io_evt()
 {
-    io_idx_test_w(10);
+    #define T_CNT 10000 * 10
+    io_idx_test_w(T_CNT);
     xepoll ee;
     auto ret = ee.init();
 
     rb_iov_ntf rb;
     ret= rb.init(1024,1024);
-    int iret = rb.init_ee(&ee,std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
+    int iret = rb.init_ee(&ee);
+    rb.set_cb(std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
 
     xior_evt io_evt;
     io_context ctx;
     ctx.rw_type_ = io_rw_type::rw_read;
     iret = io_evt.init(ctx,&rb,&ee);
 
-    ee.wait(-1);
-    ee.wait(-1);
-    ee.wait(-1);
+    while(rcnt < T_CNT)
+    {
+        ee.wait(-1);
+    }
 
-    XASSERT(10 == rcnt);
+
+    XASSERT(T_CNT == rcnt);
     printf("io_test_io_evt ok\n");
 
     return 0;
