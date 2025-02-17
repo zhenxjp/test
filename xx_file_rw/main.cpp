@@ -14,7 +14,7 @@ void map_test()
 
 int main(int argc, char** argv)
 {
-    map_test();
+    // map_test();
     // iov_rw();
     io_test();
 

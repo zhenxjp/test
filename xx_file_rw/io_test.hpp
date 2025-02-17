@@ -371,7 +371,7 @@ static void rb_ntf_reader(uint64_t val,rb_iov_ntf* rb)
         rcnt += cnt;
     }
 }
-
+// 读盘
 static int io_test_io_evt()
 {
     #define T_CNT 10000 * 10
@@ -382,6 +382,7 @@ static int io_test_io_evt()
     rb_iov_ntf rb;
     ret= rb.init(1024,1024);
     int iret = rb.init_ee(&ee);
+    // rb收到数据回调
     rb.set_cb(std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
 
     xior_evt io_evt;
@@ -399,6 +400,55 @@ static int io_test_io_evt()
     printf("io_test_io_evt ok\n");
 
     return 0;
+}
+
+static int io_test_io_evt_w()
+{
+    #define T_CNTW  10*10000
+
+    xepoll ee;
+    bool ret = ee.init();
+
+    rb_iov_ntf rb;
+    ret= rb.init(1024,1024);
+
+    auto rb_w_thread = [&]() {
+        sleep_ms(3*1000);
+        for (size_t i = 0; i < T_CNTW; i++)
+        {
+            uint64_t cnt = 0;
+            iovec *iov = rb.writer_get_blk(cnt);
+            if(0 == cnt)
+            {
+                sleep_ms(10);
+                continue;
+            }
+
+            write_iov_perf(iov,i);
+            rb.writer_done_ntf(1);
+        }
+    };
+
+
+    std::thread t1(rb_w_thread);
+
+
+    xiow_evt io_evt;
+    io_context ctx;
+    ctx.rw_type_ = io_rw_type::rw_write;
+    int iret = io_evt.init(ctx,&rb,&ee);
+
+    while(rb.r_idx() < T_CNTW)
+    {
+        ee.wait(-1);
+    }
+    t1.join();
+
+    io_idx_test_r(T_CNTW);
+
+    printf("io_test_io_evt_w ok\n");
+    return 0;
+
 }
 
 static void io_test()
@@ -419,13 +469,11 @@ static void io_test()
         idx_op(IO_IDX_KEY_DEFAULT,"del");
         io_test_read_init_err();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
+        io_test_io_evt();
+        idx_op(IO_IDX_KEY_DEFAULT,"del");
     }
     
-    io_test_io_evt();
+    io_test_io_evt_w();
+    idx_op(IO_IDX_KEY_DEFAULT,"del");
 
-    
-
-
-
-    
 }
