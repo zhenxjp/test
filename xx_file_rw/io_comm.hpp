@@ -3,6 +3,8 @@
 #include "xrb.hpp"
 #include "xtime.hpp"
 #include "xevt.hpp"
+#include "xargs.hpp"
+#include "json.hpp"
 
 #define RB_CNT 1024*1024
 #define IO_MAX 1024*1024*10

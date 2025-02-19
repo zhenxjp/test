@@ -1,0 +1,6 @@
+<root>
+
+	<log_level>1</log_level>
+	<json_path>./conf.json</json_path>
+
+</root>
