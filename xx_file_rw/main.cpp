@@ -6,21 +6,25 @@
 #include "io_perf.hpp"
 #include "rt_mgr.hpp"
 
-
-int main(int argc, char** argv)
+int demo_test(int argc, char** argv)
 {
-    // map_test();
-    // iov_rw();
-    // io_test();
-
-    // io_perf_test();
-
     argc = 3;
     argv[1] = "-c";
     argv[2] = "./conf/conf.xml";
     
     rt_mgr rt;
-    rt.run(argc,argv);
+    rt.start(argc,argv);
+    return 0;
+}
+int main(int argc, char** argv)
+{
+    // map_test();
+    // iov_rw();
+    io_test();
+
+    // io_perf_test();
+
+    //demo_test(argc,argv);
     return 0;
 }
 

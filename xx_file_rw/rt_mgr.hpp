@@ -5,6 +5,7 @@
 #include "xevt.hpp"
 #include "xargs.hpp"
 #include "json.hpp"
+#include "xio.hpp"
 #include "rapidxml/rapidxml.hpp"
 #include "rapidxml/rapidxml_utils.hpp"
 
@@ -52,7 +53,7 @@ private:
         CHECK0_RETV(json_path.empty(),err_data_err);
 
         std::ifstream ifs(json_path);
-        CHECK0_RETV(ifs.is_open(),err_data_err);
+        
 
         try{
             json_ = nlohmann::json::parse(ifs);
@@ -89,7 +90,7 @@ public:
 
 class rt_mgr {
 public:
-    int run(int argc, char** argv)
+    int start(int argc, char** argv)
     {
         string conf_path = xx_get_arg(argc,argv,"-c");
         conf_.read_conf(conf_path);
@@ -97,28 +98,101 @@ public:
         create_engine();
         create_rb();
 
+        run_all_engine();
+        return 0;
+    }
+
+
+    
+private:
+    int run_all_engine()
+    {
+        for(auto &one : engines_)
+        {
+            one.second.run();
+        }
         return 0;
     }
 
     int create_engine()
     {
-        
+        auto engine_json = conf_.json_["engines"];
+        for(auto &item : engine_json)
+        {
+            string engine_name = item["name"];
+            engines_[engine_name].init();
+        }
         return 0;
     }
     int create_rb()
     {
+        auto rb_json = conf_.json_["itc_channels"];
+        for(auto &item : rb_json)
+        {
+            rb_iov_ntf *rb = new rb_iov_ntf;
+            rb->init(item["blk_cnt"],item["blk_size"]);
+            rbs_[item["id"]] = rb;
+        }
         return 0;
     }
     int create_plugs()
     {
+        create_io_plugs();
+        
         return 0;
     }
+
+    int create_io_plugs()
+    {
+        auto io_json = conf_.json_["plugs"]["io_plugs"];
+        for(auto &item : io_json)
+        {
+            auto* rb_ptr = get_itc(item["itc_id"]);
+            CHECK_RETV(nullptr != rb_ptr,err_data_err);
+            
+            auto ee_ptr = get_ee(item["engine_name"]);
+            CHECK_RETV(nullptr != ee_ptr,err_data_err);
+
+            io_context ctx;
+            ctx.meta_.blk_cnt_max_ = item["blk_cnt_max"];
+            ctx.meta_.blk_size_ = rb_ptr->blk_size_;
+
+            string rw = item["rw"];
+            if("r" == rw )
+            {
+                ctx.rw_type_ = io_rw_type::rw_read;
+            }else if("w" == rw)
+            {
+                ctx.rw_type_ = io_rw_type::rw_write;
+                ctx.init_type_ = item["init_type"];
+            }else{
+                XASSERT(false);
+            }
+            xio_evt *ior = new xio_evt();
+            ior->init(ctx,rb_ptr,ee_ptr);
+        }
+        return 0;
+
+    }
     
+    rb_iov_ntf* get_itc(uint32_t itc_id)
+    {
+        auto it = rbs_.find(itc_id);
+        CHECK_RETV(it == rbs_.end(),nullptr);
+        return it->second;
+    }
+
+    xepoll* get_ee(const string& ee_name)
+    {
+        auto it = engines_.find(ee_name);
+        CHECK_RETV(it == engines_.end(),nullptr);
+        return it->second.ep_; 
+    }
 public:
     std::map<string,epoll_thread>   engines_;
-    std::map<uint32_t,rb_iov*>      rbs_;
+    std::map<uint32_t,rb_iov_ntf*>      rbs_;
     
-    std::map<uint32_t,io*>          ios_;
+    std::map<uint32_t,xio_evt*>          io_;
 
     rt_conf conf_;
 };

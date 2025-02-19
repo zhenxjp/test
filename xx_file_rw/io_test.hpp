@@ -381,14 +381,13 @@ static int io_test_io_evt()
 
     rb_iov_ntf rb;
     ret= rb.init(1024,1024);
-    int iret = rb.init_ee(&ee);
     // rb收到数据回调
-    rb.set_cb(std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
+    rb.set_cb(&ee,std::bind(&rb_ntf_reader,std::placeholders::_1,&rb));
 
-    xior_evt io_evt;
+    xio_evt io_evt;
     io_context ctx;
     ctx.rw_type_ = io_rw_type::rw_read;
-    iret = io_evt.init(ctx,&rb,&ee);
+    int iret = io_evt.init(ctx,&rb,&ee);
 
     while(rcnt < T_CNT)
     {
@@ -433,7 +432,7 @@ static int io_test_io_evt_w()
     std::thread t1(rb_w_thread);
 
 
-    xiow_evt io_evt;
+    xio_evt io_evt;
     io_context ctx;
     ctx.rw_type_ = io_rw_type::rw_write;
     int iret = io_evt.init(ctx,&rb,&ee);
@@ -453,7 +452,7 @@ static int io_test_io_evt_w()
 
 static void io_test()
 {
-    if(0)
+    if(1)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");

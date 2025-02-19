@@ -1,47 +1,47 @@
 {
-	"engines":[
-		{
-			"name":"rb_writer"
-		},
-		{
-			"name":"io_write"
-		},
-		{
-			"name":"io_read"
-		},
-		{
-			"name":"rb_reader"
-		}
-	],
-	"plugs":[
-		"io_plugs":[
-			{
-				"engine_name":"io_write",
-				"max_blk_cnt":1000000,
-				"file_path":"./io_save/:io_pre",
-				"rw":"w",
-				"init_type":1,
-				"itc_id":1
-			},
-			{
-				"engine_name":"io_read",
-				"max_blk_cnt":1000000,
-				"file_path":"./io_save/:io_pre",
-				"rw":"r",
-				"itc_id":2
-			}
-		]
-	],
-	"itc_channels":[
-		{
-			"id":1,
-			"blk_size":1024,
-			"blk_cnt":1024
-		},
-		{
-			"id":2,
-			"blk_size":1024,
-			"blk_cnt":1024
-		}
-	]
+    "engines": [
+        {
+            "name": "rb_writer"
+        },
+        {
+            "name": "io_write"
+        },
+        {
+            "name": "io_read"
+        },
+        {
+            "name": "rb_reader"
+        }
+    ],
+    "plugs": {
+        "io_plugs": [
+            {
+                "engine_name": "io_write",
+                "blk_cnt_max": 1000000,
+                "file_path": "./io_save/:io_pre",
+                "rw": "w",
+                "init_type": 1,
+                "itc_id": 1
+            },
+            {
+                "engine_name": "io_read",
+                "blk_cnt_max": 1000000,
+                "file_path": "./io_save/:io_pre",
+                "rw": "r",
+                "itc_id": 2
+            }
+        ]
+    },
+    "itc_channels": [
+        {
+            "id": 1,
+            "blk_size": 1024,
+            "blk_cnt": 4096
+        },
+        {
+            "id": 2,
+            "blk_size": 1024,
+            "blk_cnt": 2048
+        }
+    ]
 }
