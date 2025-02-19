@@ -416,9 +416,14 @@ static int io_test_io_evt_w()
         for (size_t i = 0; i < T_CNTW; i++)
         {
             uint64_t cnt = 0;
-            iovec *iov = rb.writer_get_blk(cnt);
-            if(0 == cnt)
+            iovec *iov = nullptr;
+            while(1)
             {
+                iov = rb.writer_get_blk(cnt);
+                if(0 != cnt)
+                {
+                    break;
+                }
                 sleep_ms(10);
                 continue;
             }
@@ -439,7 +444,9 @@ static int io_test_io_evt_w()
 
     while(rb.r_idx() < T_CNTW)
     {
+        cout<<rb.r_idx()<<endl;
         ee.wait(-1);
+        sleep_ms(10);
     }
     t1.join();
 
@@ -452,7 +459,7 @@ static int io_test_io_evt_w()
 
 static void io_test()
 {
-    if(1)
+    if(0)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
