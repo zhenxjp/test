@@ -105,15 +105,9 @@ public:
         init_ret = create_plugs();
         XASSERT(0 == init_ret);
 
-        init_ret = run_all_engine();
-        XASSERT(0 == init_ret);
-
         return 0;
     }
 
-
-    
-private:
     int run_all_engine()
     {
         for(auto &one : engines_)
@@ -122,6 +116,8 @@ private:
         }
         return 0;
     }
+private:
+    
 
     int create_engine()
     {
@@ -191,7 +187,7 @@ private:
         return 0;
 
     }
-    
+public: 
     rb_iov_ntf* get_itc(uint32_t itc_id)
     {
         auto it = rbs_.find(itc_id);
