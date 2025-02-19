@@ -14,17 +14,19 @@ int demo_test(int argc, char** argv)
     
     rt_mgr rt;
     rt.start(argc,argv);
+
+    
     return 0;
 }
 int main(int argc, char** argv)
 {
     // map_test();
     // iov_rw();
-    io_test();
+    // io_test();
 
     // io_perf_test();
 
-    //demo_test(argc,argv);
+    demo_test(argc,argv);
     return 0;
 }
 

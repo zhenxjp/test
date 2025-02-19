@@ -95,10 +95,19 @@ public:
         string conf_path = xx_get_arg(argc,argv,"-c");
         conf_.read_conf(conf_path);
 
-        create_engine();
-        create_rb();
+        int init_ret = 0;
+        init_ret = create_engine();
+        XASSERT(0 == init_ret);
 
-        run_all_engine();
+        init_ret = create_rb();
+        XASSERT(0 == init_ret);
+
+        init_ret = create_plugs();
+        XASSERT(0 == init_ret);
+
+        init_ret = run_all_engine();
+        XASSERT(0 == init_ret);
+
         return 0;
     }
 
@@ -142,10 +151,27 @@ private:
         return 0;
     }
 
+    void read_io_conf(io_context &ctx,nlohmann::json item,rb_iov_ntf* rb_ptr)
+    {
+        ctx.meta_.blk_cnt_max_ = item["blk_cnt_max"];
+        ctx.meta_.blk_size_ = rb_ptr->blk_size_;
+
+        string rw = item["rw"];
+        if("r" == rw )
+        {
+            ctx.rw_type_ = io_rw_type::rw_read;
+        }else if("w" == rw)
+        {
+            ctx.rw_type_ = io_rw_type::rw_write;
+            ctx.init_type_ = item["init_type"];
+        }else{
+            XASSERT(false);
+        }
+    }
     int create_io_plugs()
     {
         auto io_json = conf_.json_["plugs"]["io_plugs"];
-        for(auto &item : io_json)
+        for(auto item : io_json)
         {
             auto* rb_ptr = get_itc(item["itc_id"]);
             CHECK_RETV(nullptr != rb_ptr,err_data_err);
@@ -154,23 +180,14 @@ private:
             CHECK_RETV(nullptr != ee_ptr,err_data_err);
 
             io_context ctx;
-            ctx.meta_.blk_cnt_max_ = item["blk_cnt_max"];
-            ctx.meta_.blk_size_ = rb_ptr->blk_size_;
-
-            string rw = item["rw"];
-            if("r" == rw )
-            {
-                ctx.rw_type_ = io_rw_type::rw_read;
-            }else if("w" == rw)
-            {
-                ctx.rw_type_ = io_rw_type::rw_write;
-                ctx.init_type_ = item["init_type"];
-            }else{
-                XASSERT(false);
-            }
-            xio_evt *ior = new xio_evt();
-            ior->init(ctx,rb_ptr,ee_ptr);
+            read_io_conf(ctx,item,rb_ptr);
+            
+            xio_evt *io_ptr = new xio_evt();
+            int io_ret = io_ptr->init(ctx,rb_ptr,ee_ptr);
+            CHECK0_RETV(io_ret,err_data_err);
+            io_[item["id"]] = io_ptr;
         }
+
         return 0;
 
     }
@@ -178,14 +195,14 @@ private:
     rb_iov_ntf* get_itc(uint32_t itc_id)
     {
         auto it = rbs_.find(itc_id);
-        CHECK_RETV(it == rbs_.end(),nullptr);
+        CHECK_RETV(it != rbs_.end(),nullptr);
         return it->second;
     }
 
     xepoll* get_ee(const string& ee_name)
     {
         auto it = engines_.find(ee_name);
-        CHECK_RETV(it == engines_.end(),nullptr);
+        CHECK_RETV(it != engines_.end(),nullptr);
         return it->second.ep_; 
     }
 public:
