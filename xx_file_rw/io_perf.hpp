@@ -41,6 +41,7 @@ static int io_writer_io(io_tester *gt_ptr )
 
 static void io_reader_io(io_tester *gt_ptr )
 {
+    sleep_ms(3000);
     io_tester &GT = *gt_ptr;
     GT.ctx.rw_type_ = io_rw_type::rw_read;
 
