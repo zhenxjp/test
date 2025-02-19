@@ -27,10 +27,11 @@ int demo_test(int argc, char** argv)
         uint64_t ridx = rb->r_idx();
         for(int i = 0; i < cnt; i++)
         {
-            LOG_INFO("rb r idx:{},len:{} \n",ridx + i,iov[i].iov_len);
+            
             read_iov_perf(iov+i,ridx + i);
 
         }
+        LOG_INFO("rb r idx:{} \n",ridx + cnt);
         rb->reader_done(cnt);
     });
 
@@ -46,10 +47,11 @@ int demo_test(int argc, char** argv)
         uint64_t w_idx = rbw->w_idx();
         for(int i = 0; i < cnt; i++)
         {
-            LOG_INFO("rb w idx:{},len:{} \n",w_idx + i,iov[i].iov_len);
 
             write_iov_perf(iov+i,w_idx + i);
         }
+        // LOG_INFO("rb w idx:{},len:{} \n",w_idx + cnt,iov[i].iov_len);
+
         rbw->writer_done_ntf(cnt);
     }
     return 0;
