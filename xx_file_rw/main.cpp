@@ -23,7 +23,7 @@ int demo_test(int argc, char** argv)
         iovec *iov = rb->reader_get_blk(cnt);
         if(0 == cnt)
             return;
-        cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,(uint64_t)573);
         uint64_t ridx = rb->r_idx();
         for(int i = 0; i < cnt; i++)
         {
@@ -31,7 +31,8 @@ int demo_test(int argc, char** argv)
             read_iov_perf(iov+i,ridx + i);
 
         }
-        LOG_INFO("rb r idx:{} \n",ridx + cnt);
+        if (0 == ridx % 1000)
+            LOG_INFO("rb r idx:{} \n",ridx + cnt);
         rb->reader_done(cnt);
     });
 
@@ -42,7 +43,7 @@ int demo_test(int argc, char** argv)
     {
         uint64_t cnt = 0;
         iovec *iov = rbw->writer_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,(uint64_t)888);
 
         uint64_t w_idx = rbw->w_idx();
         for(int i = 0; i < cnt; i++)
@@ -56,14 +57,18 @@ int demo_test(int argc, char** argv)
     }
     return 0;
 }
+
+
+
+
 int main(int argc, char** argv)
 {
     //iov_rw();
-    //io_test();
+    io_test();
 
-    //io_perf_test();
+    // io_perf_test();
 
-    demo_test(argc,argv);
+    // demo_test(argc,argv);
     return 0;
 }
 

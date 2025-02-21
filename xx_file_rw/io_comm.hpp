@@ -82,7 +82,7 @@ static void rb_writer(io_tester *gt_ptr )
     {
         uint64_t cnt = 0;
         iovec *iov = GT.rb->writer_get_blk(cnt);
-        cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,(uint64_t)774);
         for(int i = 0; i < cnt; i++)
         {
             write_iov_perf(iov+i,idx);
@@ -92,6 +92,8 @@ static void rb_writer(io_tester *gt_ptr )
         GT.rb_w_cnt += cnt;
         if (GT.rb_w_cnt >= GT.max)
             break;
+
+        sleep_ms(100);
     }
 }
 
@@ -108,7 +110,7 @@ static void rb_reader(io_tester *gt_ptr)
         iovec *iov = rb->reader_get_blk(cnt);
         if(0 == cnt)
             continue;
-        cnt = std::min(cnt,(uint64_t)1024);
+        cnt = std::min(cnt,(uint64_t)675);
         for(int i = 0; i < cnt; i++)
         {
             // printf("rb r idx:%d,len:%ju \n",idx,iov[i].iov_len);

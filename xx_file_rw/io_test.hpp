@@ -444,7 +444,7 @@ static int io_test_io_evt_w()
 
     while(rb.r_idx() < T_CNTW)
     {
-        cout<<rb.r_idx()<<endl;
+        // cout<<rb.r_idx()<<endl;
         ee.wait(-1);
         sleep_ms(10);
     }
@@ -459,7 +459,7 @@ static int io_test_io_evt_w()
 
 static void io_test()
 {
-    if(0)
+    if(1)
     {
         io_test_data_ok();
         idx_op(IO_IDX_KEY_DEFAULT,"del");
