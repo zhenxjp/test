@@ -5,6 +5,7 @@
 #include "io_test.hpp"
 #include "io_perf.hpp"
 #include "rt_mgr.hpp"
+#include "lock_test.hpp"
 
 int demo_test(int argc, char** argv)
 {
@@ -59,10 +60,13 @@ int demo_test(int argc, char** argv)
 }
 
 
-
-
 int main(int argc, char** argv)
 {
+    atomic<int> xxx;
+    xxx += 5;
+    test_spin_lock();
+    return 0;
+
     //iov_rw();
     io_test();
 
