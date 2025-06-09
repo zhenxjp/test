@@ -5,10 +5,11 @@
 #include "io_test.hpp"
 #include "io_perf.hpp"
 #include "rt_mgr.hpp"
-#include "lock_test.hpp"
+#include "for_test.hpp"
 
 int demo_test(int argc, char** argv)
 {
+    
     argc = 3;
     argv[1] = "-c";
     argv[2] = "./conf/conf.xml";
@@ -60,19 +61,11 @@ int demo_test(int argc, char** argv)
 }
 
 
+
 int main(int argc, char** argv)
 {
-    atomic<int> xxx;
-    xxx += 5;
-    test_spin_lock();
-    return 0;
+    for_test();
 
-    //iov_rw();
-    io_test();
-
-    // io_perf_test();
-
-    // demo_test(argc,argv);
     return 0;
 }
 
